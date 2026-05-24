@@ -12,7 +12,8 @@ Debian host. The role:
 - Configures a listener (all interfaces by default, so it's LAN-reachable).
 - Requires authentication — a **password file** with `allow_anonymous false` by
   default; accounts are supplied by the caller (keep them in your vault).
-- Enables persistence so retained and queued messages survive a restart.
+- Leaves persistence and logging at the distro defaults from the base
+  `mosquitto.conf` (on Debian: persistence enabled at `/var/lib/mosquitto`).
 
 ## Requirements
 
@@ -31,8 +32,6 @@ Debian host. The role:
 | `mosquitto_listen_port` | `1883` | Listener TCP port. |
 | `mosquitto_listen_address` | `""` | Bind address; empty = all interfaces. |
 | `mosquitto_allow_anonymous` | `false` | Allow unauthenticated clients. |
-| `mosquitto_persistence` | `true` | Persist retained/queued messages. |
-| `mosquitto_persistence_location` | `/var/lib/mosquitto/` | Persistence DB directory. |
 | `mosquitto_password_file` | `/etc/mosquitto/passwd` | Password file path. |
 | `mosquitto_conf_file` | `/etc/mosquitto/conf.d/ansible.conf` | Role-managed listener config. |
 | `mosquitto_user` / `mosquitto_group` | `mosquitto` | Owner of the password file. |

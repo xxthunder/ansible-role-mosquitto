@@ -4,27 +4,5 @@
   become: true
   tasks:
     - name: Install and configure mosquitto
-      block:
-        - name: Apply the role
-          ansible.builtin.include_role:
-            name: mosquitto
-      rescue:
-        - name: Dump mosquitto journal
-          ansible.builtin.command: journalctl -xeu mosquitto --no-pager
-          changed_when: false
-          failed_when: false
-          register: mosquitto_journal
-        - name: Show journal
-          ansible.builtin.debug:
-            var: mosquitto_journal.stdout_lines
-        - name: Dump rendered config
-          ansible.builtin.command: "cat /etc/mosquitto/conf.d/ansible.conf"
-          changed_when: false
-          failed_when: false
-          register: mosquitto_rendered
-        - name: Show rendered config
-          ansible.builtin.debug:
-            var: mosquitto_rendered.stdout_lines
-        - name: Re-raise the failure
-          ansible.builtin.fail:
-            msg: "mosquitto failed to start — see journal above"
+      ansible.builtin.include_role:
+        name: mosquitto

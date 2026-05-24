@@ -54,14 +54,6 @@ argument_specs:
         type: bool
         description: Allow unauthenticated clients. Default false.
 
-      mosquitto_persistence:
-        type: bool
-        description: Persist retained/queued messages across restarts.
-
-      mosquitto_persistence_location:
-        type: str
-        description: Directory mosquitto writes its persistence DB to.
-
       mosquitto_config_dir:
         type: str
         description: Mosquitto config directory.

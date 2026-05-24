@@ -18,9 +18,9 @@ mosquitto_allow_anonymous: false
 # for an existing user is not re-applied (see README).
 mosquitto_users: []
 
-# Persistence — retained messages and queued QoS>0 messages survive a restart.
-mosquitto_persistence: true
-mosquitto_persistence_location: "/var/lib/mosquitto/"
+# Persistence and logging are left at the distro defaults already present in the
+# base /etc/mosquitto/mosquitto.conf (on Debian: persistence on, /var/lib/mosquitto).
+# Re-declaring persistence_location from a conf.d drop-in is a fatal duplicate.
 
 # Paths and identity (rarely overridden).
 mosquitto_config_dir: "/etc/mosquitto"

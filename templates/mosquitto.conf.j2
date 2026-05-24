@@ -1,6 +1,7 @@
 # Managed by ansible-role-mosquitto — do not edit by hand.
+# Adds only the listener + auth; persistence/logging stay at the distro defaults
+# already set in the base mosquitto.conf (re-declaring persistence_location is a
+# fatal "Duplicate" error in mosquitto).
 listener {{ mosquitto_listen_port }}{{ ' ' ~ mosquitto_listen_address if mosquitto_listen_address else '' }}
 allow_anonymous {{ mosquitto_allow_anonymous | ternary('true', 'false') }}
 password_file {{ mosquitto_password_file }}
-persistence {{ mosquitto_persistence | ternary('true', 'false') }}
-persistence_location {{ mosquitto_persistence_location }}
