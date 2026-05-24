@@ -1,0 +1,64 @@
+---
+# mosquitto — install and configure a Mosquitto MQTT broker on Debian.
+# Runs as root on the target (set become in the consuming play).
+
+- name: Install mosquitto
+  ansible.builtin.apt:
+    name: "{{ mosquitto_package }}{{ ('=' ~ mosquitto_version) if mosquitto_version else '' }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Ensure the password file exists
+  # force: false creates an empty file only when absent, so the user-add step
+  # below stays idempotent (mosquitto_passwd -b appends).
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ mosquitto_password_file }}"
+    owner: "{{ mosquitto_user }}"
+    group: "{{ mosquitto_group }}"
+    mode: "0640"
+    force: false
+
+- name: Read existing mosquitto users
+  ansible.builtin.command: "grep -oE '^[^:]+' {{ mosquitto_password_file }}"
+  register: mosquitto_existing_users
+  changed_when: false
+  failed_when: false
+
+- name: Add mosquitto users
+  # mosquitto_passwd re-salts on every call, so it is not idempotent on its own;
+  # gate on the user being absent. Password *changes* for an existing user are
+  # therefore not re-applied — remove the line (or the file) to rotate.
+  ansible.builtin.command: >-
+    mosquitto_passwd -b {{ mosquitto_password_file }}
+    {{ item.username }} {{ item.password }}
+  loop: "{{ mosquitto_users }}"
+  loop_control:
+    label: "{{ item.username }}"
+  no_log: true
+  when: item.username not in (mosquitto_existing_users.stdout_lines | default([]))
+  changed_when: true
+  notify: Restart mosquitto
+
+- name: Enforce password file ownership and mode
+  ansible.builtin.file:
+    path: "{{ mosquitto_password_file }}"
+    owner: "{{ mosquitto_user }}"
+    group: "{{ mosquitto_group }}"
+    mode: "0640"
+
+- name: Deploy mosquitto listener config
+  ansible.builtin.template:
+    src: mosquitto.conf.j2
+    dest: "{{ mosquitto_conf_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart mosquitto
+
+- name: Enable and start mosquitto
+  ansible.builtin.systemd:
+    name: "{{ mosquitto_service }}"
+    enabled: true
+    state: started

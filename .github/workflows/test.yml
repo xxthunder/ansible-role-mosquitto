@@ -1,0 +1,62 @@
+---
+name: CI
+"on":
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: "mosquitto"
+
+jobs:
+  lint:
+    name: ansible-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+        with:
+          path: "mosquitto"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install test dependencies
+        run: pip3 install ansible-core ansible-lint
+
+      - name: Run ansible-lint
+        run: ansible-lint
+        env:
+          # converge.yml references the role by name; the role is the checkout
+          # root, so its parent must be on the roles path to resolve it.
+          ANSIBLE_ROLES_PATH: ".."
+
+  molecule:
+    name: molecule
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+        with:
+          path: "mosquitto"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install test dependencies
+        run: pip3 install ansible-core "molecule-plugins[docker]" docker
+
+      - name: Run Molecule tests
+        run: molecule test
+        env:
+          ANSIBLE_FORCE_COLOR: "1"
+          PY_COLORS: "1"

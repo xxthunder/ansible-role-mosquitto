@@ -1,0 +1,31 @@
+---
+# Defaults for the mosquitto role.
+
+# Package. Leave the version empty to track the distro's current mosquitto; pin
+# (e.g. "2.0.20-1") for reproducibility.
+mosquitto_package: mosquitto
+mosquitto_version: ""
+
+# Listener. An empty address binds all interfaces (LAN-reachable). With
+# mosquitto_allow_anonymous false, every client must authenticate — supply at
+# least one entry in mosquitto_users.
+mosquitto_listen_port: 1883
+mosquitto_listen_address: ""
+mosquitto_allow_anonymous: false
+
+# Authentication. A list of { username, password } — supply via the consumer's
+# vault, never in the role. Users are added idempotently; a password *change*
+# for an existing user is not re-applied (see README).
+mosquitto_users: []
+
+# Persistence — retained messages and queued QoS>0 messages survive a restart.
+mosquitto_persistence: true
+mosquitto_persistence_location: "/var/lib/mosquitto/"
+
+# Paths and identity (rarely overridden).
+mosquitto_config_dir: "/etc/mosquitto"
+mosquitto_conf_file: "/etc/mosquitto/conf.d/ansible.conf"
+mosquitto_password_file: "/etc/mosquitto/passwd"
+mosquitto_user: mosquitto
+mosquitto_group: mosquitto
+mosquitto_service: mosquitto

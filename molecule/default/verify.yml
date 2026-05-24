@@ -1,0 +1,25 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Mosquitto service is running
+      ansible.builtin.assert:
+        that:
+          - "'mosquitto.service' in ansible_facts.services"
+          - ansible_facts.services['mosquitto.service'].state == 'running'
+        fail_msg: "mosquitto.service is not running"
+
+    - name: Listener is accepting connections on 1883
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 1883
+        timeout: 10
+
+    - name: Password file contains the test user
+      ansible.builtin.command: "grep -q '^testuser:' /etc/mosquitto/passwd"
+      register: mosquitto_passwd_check
+      changed_when: false

@@ -1,0 +1,6 @@
+# Managed by ansible-role-mosquitto — do not edit by hand.
+listener {{ mosquitto_listen_port }}{{ ' ' ~ mosquitto_listen_address if mosquitto_listen_address else '' }}
+allow_anonymous {{ mosquitto_allow_anonymous | ternary('true', 'false') }}
+password_file {{ mosquitto_password_file }}
+persistence {{ mosquitto_persistence | ternary('true', 'false') }}
+persistence_location {{ mosquitto_persistence_location }}

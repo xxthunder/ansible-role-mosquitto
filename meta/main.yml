@@ -1,0 +1,27 @@
+---
+galaxy_info:
+  role_name: mosquitto
+  namespace: xxthunder
+  author: xxthunder
+  description: >-
+    Mosquitto MQTT broker on Debian — authenticated listener (password file,
+    anonymous disabled), persistence, and a systemd service.
+  company: xxthunder
+  license: MIT
+  # argument_specs.yml requires the role-arg validation introduced in 2.11.
+  min_ansible_version: "2.11"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+
+  galaxy_tags:
+    - mqtt
+    - mosquitto
+    - broker
+    - messaging
+    - iot
+
+dependencies: []

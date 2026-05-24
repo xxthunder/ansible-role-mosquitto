@@ -1,0 +1,8 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  tasks:
+    - name: Install and configure mosquitto
+      ansible.builtin.include_role:
+        name: mosquitto

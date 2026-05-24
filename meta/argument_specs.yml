@@ -1,0 +1,87 @@
+---
+# Role argument spec for mosquitto. Validated at role start, so a missing or
+# mistyped variable fails fast. This is the role's complete variable surface;
+# structural defaults live in defaults/main.yml (values not restated here, to
+# avoid drift).
+#
+# Requires ansible-core >= 2.11.
+
+argument_specs:
+  main:
+    short_description: Mosquitto MQTT broker on Debian.
+    description:
+      - Installs mosquitto, configures an authenticated listener with a password
+        file (anonymous disabled by default) and persistence, and manages the
+        systemd service. See README.md for the full picture.
+    options:
+
+      mosquitto_users:
+        type: list
+        elements: dict
+        required: false
+        description:
+          - MQTT accounts to provision. Supply via the consumer's vault. With
+            mosquitto_allow_anonymous false (the default) at least one is needed,
+            or no client can connect.
+        options:
+          username:
+            type: str
+            required: true
+            description: MQTT username.
+          password:
+            type: str
+            required: true
+            no_log: true
+            description: MQTT password (plaintext in; hashed into the password file).
+
+      mosquitto_package:
+        type: str
+        description: Debian package name (default "mosquitto").
+
+      mosquitto_version:
+        type: str
+        description: Optional pinned apt version; empty tracks the distro's current.
+
+      mosquitto_listen_port:
+        type: int
+        description: TCP port for the listener.
+
+      mosquitto_listen_address:
+        type: str
+        description: Bind address; empty binds all interfaces (LAN-reachable).
+
+      mosquitto_allow_anonymous:
+        type: bool
+        description: Allow unauthenticated clients. Default false.
+
+      mosquitto_persistence:
+        type: bool
+        description: Persist retained/queued messages across restarts.
+
+      mosquitto_persistence_location:
+        type: str
+        description: Directory mosquitto writes its persistence DB to.
+
+      mosquitto_config_dir:
+        type: str
+        description: Mosquitto config directory.
+
+      mosquitto_conf_file:
+        type: str
+        description: Path of the role-managed listener config (under conf.d).
+
+      mosquitto_password_file:
+        type: str
+        description: Path of the password file.
+
+      mosquitto_user:
+        type: str
+        description: System user mosquitto runs as / owns the password file.
+
+      mosquitto_group:
+        type: str
+        description: System group for the password file.
+
+      mosquitto_service:
+        type: str
+        description: systemd service name.
