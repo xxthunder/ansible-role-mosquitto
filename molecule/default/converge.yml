@@ -5,15 +5,18 @@
   tasks:
     # Generate a throwaway self-signed CA + broker cert with openssl so the
     # TLS listener has real material to bind against. Shelling out keeps the
-    # CI deps minimal (no community.crypto collection needed beyond mosquitto
-    # itself). No fixtures are committed to the repo.
+    # CI deps minimal (no community.crypto collection needed). The mosquitto
+    # user doesn't exist yet (created by the apt install inside the role),
+    # so cert files are left root-owned; mode 0644 is enough for the broker
+    # process to read at startup. Throwaway material in a CI container —
+    # not a production pattern.
     - name: Ensure cert dir
       ansible.builtin.file:
         path: /etc/mosquitto/certs
         state: directory
-        owner: mosquitto
-        group: mosquitto
-        mode: "0750"
+        owner: root
+        group: root
+        mode: "0755"
 
     - name: Ensure openssl is installed
       ansible.builtin.apt:
@@ -27,11 +30,9 @@
         cmd: |
           set -euo pipefail
           cd /etc/mosquitto/certs
-          # CA
           openssl genrsa -out ca.key 2048
           openssl req -x509 -new -nodes -key ca.key -sha256 -days 1 \
             -subj "/CN=molecule-test-ca" -out ca.crt
-          # Broker key + CSR + signed cert with SANs
           openssl genrsa -out broker.key 2048
           cat > broker.cnf <<'EOF'
           [req]
@@ -50,9 +51,7 @@
           openssl x509 -req -in broker.csr -CA ca.crt -CAkey ca.key \
             -CAcreateserial -out broker.pem -days 1 -sha256 \
             -extensions v3_req -extfile broker.cnf
-          chown mosquitto:mosquitto ca.key ca.crt broker.key broker.csr broker.pem broker.cnf
-          chmod 0600 ca.key broker.key
-          chmod 0644 ca.crt broker.pem
+          chmod 0644 ca.key ca.crt broker.key broker.pem
       args:
         executable: /bin/bash
         creates: /etc/mosquitto/certs/broker.pem
