@@ -2,15 +2,17 @@
 # Adds only listener(s) + auth; persistence/logging stay at the distro defaults
 # already set in the base mosquitto.conf (re-declaring persistence_location is a
 # fatal "Duplicate" error in mosquitto).
+#
+# password_file is emitted once at global scope: mosquitto treats it as a
+# global directive and rejects duplicates even when split per-listener.
+password_file {{ mosquitto_password_file }}
 {% if mosquitto_plaintext_listener_enabled %}
 listener {{ mosquitto_listen_port }}{{ ' ' ~ mosquitto_listen_address if mosquitto_listen_address else '' }}
 allow_anonymous {{ mosquitto_allow_anonymous | ternary('true', 'false') }}
-password_file {{ mosquitto_password_file }}
 {% endif %}
 {% if mosquitto_tls_enabled %}
 listener {{ mosquitto_tls_listen_port }}{{ ' ' ~ mosquitto_tls_listen_address if mosquitto_tls_listen_address else '' }}
 allow_anonymous {{ mosquitto_allow_anonymous | ternary('true', 'false') }}
-password_file {{ mosquitto_password_file }}
 cafile {{ mosquitto_tls_cafile }}
 certfile {{ mosquitto_tls_certfile }}
 keyfile {{ mosquitto_tls_keyfile }}
