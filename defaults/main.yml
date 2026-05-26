@@ -6,12 +6,30 @@
 mosquitto_package: mosquitto
 mosquitto_version: ""
 
-# Listener. An empty address binds all interfaces (LAN-reachable). With
-# mosquitto_allow_anonymous false, every client must authenticate — supply at
-# least one entry in mosquitto_users.
+# Plaintext listener. An empty address binds all interfaces (LAN-reachable).
+# With mosquitto_allow_anonymous false, every client must authenticate — supply
+# at least one entry in mosquitto_users.
+#
+# Set mosquitto_plaintext_listener_enabled to false for a TLS-only broker; in
+# that case mosquitto_tls_enabled must be true (the role asserts at least one
+# listener is up).
+mosquitto_plaintext_listener_enabled: true
 mosquitto_listen_port: 1883
 mosquitto_listen_address: ""
 mosquitto_allow_anonymous: false
+
+# TLS listener. Off by default — set mosquitto_tls_enabled and supply the three
+# cert paths. The TLS listener shares the same password file and anonymous
+# policy as the plaintext one. require_certificate stays false unless the
+# caller wants mutual TLS (client certs); HSH-034 leaves it off — encryption
+# only, passwords keep the auth job.
+mosquitto_tls_enabled: false
+mosquitto_tls_listen_port: 8883
+mosquitto_tls_listen_address: ""
+mosquitto_tls_cafile: ""
+mosquitto_tls_certfile: ""
+mosquitto_tls_keyfile: ""
+mosquitto_tls_require_certificate: false
 
 # Authentication. A list of { username, password } — supply via the consumer's
 # vault, never in the role. Users are added idempotently; a password *change*

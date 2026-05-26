@@ -2,6 +2,27 @@
 # mosquitto — install and configure a Mosquitto MQTT broker on Debian.
 # Runs as root on the target (set become in the consuming play).
 
+- name: Assert at least one listener is enabled
+  ansible.builtin.assert:
+    that:
+      - mosquitto_plaintext_listener_enabled or mosquitto_tls_enabled
+    fail_msg: >-
+      Neither listener is enabled. Set mosquitto_plaintext_listener_enabled
+      and/or mosquitto_tls_enabled.
+
+- name: Assert TLS cert material is supplied when TLS is enabled
+  ansible.builtin.assert:
+    that:
+      - mosquitto_tls_cafile | length > 0
+      - mosquitto_tls_certfile | length > 0
+      - mosquitto_tls_keyfile | length > 0
+    fail_msg: >-
+      mosquitto_tls_enabled is true but one or more of mosquitto_tls_cafile,
+      mosquitto_tls_certfile, mosquitto_tls_keyfile is empty. The role does not
+      ship cert material — supply paths to files the caller has already placed
+      on the host.
+  when: mosquitto_tls_enabled
+
 - name: Install mosquitto
   ansible.builtin.apt:
     name: "{{ mosquitto_package }}{{ ('=' ~ mosquitto_version) if mosquitto_version else '' }}"
