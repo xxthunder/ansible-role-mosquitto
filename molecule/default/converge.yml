@@ -3,27 +3,31 @@
   hosts: all
   become: true
   tasks:
-    # Generate a throwaway self-signed CA + broker cert with openssl so the
-    # TLS listener has real material to bind against. Shelling out keeps the
-    # CI deps minimal (no community.crypto collection needed). The mosquitto
-    # user doesn't exist yet (created by the apt install inside the role),
-    # so cert files are left root-owned; mode 0644 is enough for the broker
-    # process to read at startup. Throwaway material in a CI container —
-    # not a production pattern.
+    # Install mosquitto + openssl first so:
+    #   - the mosquitto system user exists (needed to own the broker key
+    #     readable by the service)
+    #   - openssl is available for the throwaway cert gen below
+    # The role's own apt task is then a no-op.
+    #
+    # mosquitto 2.0+ refuses to start if the keyfile is group/world readable,
+    # so the broker key is mode 0600 owned mosquitto:mosquitto. The cert
+    # material is throwaway (1-day self-signed) and not committed.
+    - name: Install mosquitto and openssl
+      ansible.builtin.apt:
+        name:
+          - mosquitto
+          - openssl
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
     - name: Ensure cert dir
       ansible.builtin.file:
         path: /etc/mosquitto/certs
         state: directory
-        owner: root
-        group: root
-        mode: "0755"
-
-    - name: Ensure openssl is installed
-      ansible.builtin.apt:
-        name: openssl
-        state: present
-        update_cache: true
-        cache_valid_time: 3600
+        owner: mosquitto
+        group: mosquitto
+        mode: "0750"
 
     - name: Generate throwaway CA + broker cert
       ansible.builtin.shell:
@@ -51,11 +55,28 @@
           openssl x509 -req -in broker.csr -CA ca.crt -CAkey ca.key \
             -CAcreateserial -out broker.pem -days 1 -sha256 \
             -extensions v3_req -extfile broker.cnf
-          chmod 0644 ca.key ca.crt broker.key broker.pem
+          chown mosquitto:mosquitto ca.crt ca.key broker.key broker.pem
+          chmod 0600 ca.key broker.key
+          chmod 0644 ca.crt broker.pem
       args:
         executable: /bin/bash
         creates: /etc/mosquitto/certs/broker.pem
 
     - name: Install and configure mosquitto
-      ansible.builtin.include_role:
-        name: mosquitto
+      block:
+        - name: Apply mosquitto role
+          ansible.builtin.include_role:
+            name: mosquitto
+      rescue:
+        # Surface why mosquitto failed to start, then re-raise.
+        - name: Dump mosquitto journal
+          ansible.builtin.command: journalctl -u mosquitto -n 80 --no-pager
+          register: mosquitto_journal
+          changed_when: false
+          failed_when: false
+        - name: Show mosquitto journal
+          ansible.builtin.debug:
+            var: mosquitto_journal.stdout_lines
+        - name: Re-raise the original failure
+          ansible.builtin.fail:
+            msg: mosquitto role failed — see journal above
