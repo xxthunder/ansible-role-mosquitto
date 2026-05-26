@@ -42,17 +42,57 @@ argument_specs:
         type: str
         description: Optional pinned apt version; empty tracks the distro's current.
 
+      mosquitto_plaintext_listener_enabled:
+        type: bool
+        description:
+          - Emit the plaintext listener (mosquitto_listen_port). Set false for
+            a TLS-only broker (with mosquitto_tls_enabled true).
+
       mosquitto_listen_port:
         type: int
-        description: TCP port for the listener.
+        description: TCP port for the plaintext listener.
 
       mosquitto_listen_address:
         type: str
-        description: Bind address; empty binds all interfaces (LAN-reachable).
+        description: Plaintext bind address; empty binds all interfaces.
 
       mosquitto_allow_anonymous:
         type: bool
-        description: Allow unauthenticated clients. Default false.
+        description:
+          - Allow unauthenticated clients. Applies to both listeners.
+
+      mosquitto_tls_enabled:
+        type: bool
+        description:
+          - Emit a TLS (MQTTS) listener. When true, mosquitto_tls_cafile /
+            certfile / keyfile must be set to paths already present on the
+            host (the role does not ship cert material).
+
+      mosquitto_tls_listen_port:
+        type: int
+        description: TCP port for the TLS listener (conventionally 8883).
+
+      mosquitto_tls_listen_address:
+        type: str
+        description: TLS bind address; empty binds all interfaces.
+
+      mosquitto_tls_cafile:
+        type: str
+        description: Path to the CA cert that signed the server cert.
+
+      mosquitto_tls_certfile:
+        type: str
+        description: Path to the server certificate (PEM).
+
+      mosquitto_tls_keyfile:
+        type: str
+        description: Path to the server private key (PEM).
+
+      mosquitto_tls_require_certificate:
+        type: bool
+        description:
+          - Require clients to present a certificate (mutual TLS). Default
+            false — encryption only; password auth still applies.
 
       mosquitto_config_dir:
         type: str

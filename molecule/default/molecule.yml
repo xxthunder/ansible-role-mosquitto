@@ -23,5 +23,12 @@ provisioner:
         mosquitto_users:
           - username: testuser
             password: testpass
+        # TLS path is exercised alongside the plaintext one. Cert material is
+        # generated inside converge.yml against a throwaway self-signed CA, so
+        # no fixture files are committed to the repo.
+        mosquitto_tls_enabled: true
+        mosquitto_tls_cafile: /etc/mosquitto/certs/ca.crt
+        mosquitto_tls_certfile: /etc/mosquitto/certs/broker.pem
+        mosquitto_tls_keyfile: /etc/mosquitto/certs/broker.key
 verifier:
   name: ansible

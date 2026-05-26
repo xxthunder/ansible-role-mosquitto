@@ -3,6 +3,77 @@
   hosts: all
   become: true
   tasks:
+    # Generate a throwaway self-signed CA and broker cert so the TLS listener
+    # has real material to bind against. No fixtures are committed to the repo.
+    - name: Ensure cert dir
+      ansible.builtin.file:
+        path: /etc/mosquitto/certs
+        state: directory
+        owner: mosquitto
+        group: mosquitto
+        mode: "0750"
+
+    - name: Install cryptography (needed by community.crypto for cert ops)
+      ansible.builtin.apt:
+        name: python3-cryptography
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: CA private key
+      community.crypto.openssl_privatekey:
+        path: /etc/mosquitto/certs/ca.key
+        size: 2048
+        mode: "0600"
+        owner: mosquitto
+        group: mosquitto
+
+    - name: CA CSR
+      community.crypto.openssl_csr:
+        path: /etc/mosquitto/certs/ca.csr
+        privatekey_path: /etc/mosquitto/certs/ca.key
+        common_name: molecule-test-ca
+        basic_constraints: ["CA:TRUE"]
+        basic_constraints_critical: true
+        key_usage: ["keyCertSign", "cRLSign"]
+        key_usage_critical: true
+
+    - name: CA cert (self-signed)
+      community.crypto.x509_certificate:
+        path: /etc/mosquitto/certs/ca.crt
+        csr_path: /etc/mosquitto/certs/ca.csr
+        privatekey_path: /etc/mosquitto/certs/ca.key
+        provider: selfsigned
+        mode: "0644"
+        owner: mosquitto
+        group: mosquitto
+
+    - name: Broker private key
+      community.crypto.openssl_privatekey:
+        path: /etc/mosquitto/certs/broker.key
+        size: 2048
+        mode: "0600"
+        owner: mosquitto
+        group: mosquitto
+
+    - name: Broker CSR
+      community.crypto.openssl_csr:
+        path: /etc/mosquitto/certs/broker.csr
+        privatekey_path: /etc/mosquitto/certs/broker.key
+        common_name: localhost
+        subject_alt_name: ["DNS:localhost", "IP:127.0.0.1"]
+
+    - name: Broker cert (signed by the throwaway CA)
+      community.crypto.x509_certificate:
+        path: /etc/mosquitto/certs/broker.pem
+        csr_path: /etc/mosquitto/certs/broker.csr
+        ownca_path: /etc/mosquitto/certs/ca.crt
+        ownca_privatekey_path: /etc/mosquitto/certs/ca.key
+        provider: ownca
+        mode: "0644"
+        owner: mosquitto
+        group: mosquitto
+
     - name: Install and configure mosquitto
       ansible.builtin.include_role:
         name: mosquitto

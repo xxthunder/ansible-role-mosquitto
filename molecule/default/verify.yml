@@ -13,11 +13,28 @@
           - ansible_facts.services['mosquitto.service'].state == 'running'
         fail_msg: "mosquitto.service is not running"
 
-    - name: Listener is accepting connections on 1883
+    - name: Plaintext listener is accepting connections on 1883
       ansible.builtin.wait_for:
         host: 127.0.0.1
         port: 1883
         timeout: 10
+
+    - name: TLS listener is accepting connections on 8883
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 8883
+        timeout: 10
+
+    - name: TLS listener presents a cert signed by our throwaway CA
+      # openssl s_client returns 0 only when the cert chain validates against
+      # the -CAfile we point at. </dev/null closes stdin so the client exits.
+      ansible.builtin.command: >-
+        openssl s_client -connect 127.0.0.1:8883
+        -CAfile /etc/mosquitto/certs/ca.crt
+        -verify_return_error -brief
+      args:
+        stdin: ""
+      changed_when: false
 
     - name: Password file contains the test user
       ansible.builtin.command: "grep -q '^testuser:' /etc/mosquitto/passwd"
